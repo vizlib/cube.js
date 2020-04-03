@@ -109,9 +109,6 @@ class ClickHouseDriver extends BaseDriver {
               row[field] = `${value.substring(0, 10)}T${value.substring(11, 22)}.000`;
             } else if (meta.type.includes("Date")) {
               row[field] = `${value}T00:00:00.000`;
-            } else if (meta.type.includes("Int") || meta.type.includes("Float")) {
-              // convert all numbers into strings
-              row[field] = `${value}`;
             }
           }
         });
