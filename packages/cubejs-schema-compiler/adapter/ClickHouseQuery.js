@@ -15,8 +15,14 @@ class ClickHouseFilter extends BaseFilter {
   likeIgnoreCase(column, not) {
     return `lower(${column}) ${not ? 'NOT' : ''} LIKE CONCAT('%', lower(?), '%')`;
   }
+  
+  castParameter() {
+    if (this.definition().type === 'number') {
+      return 'toFloat64(?)';
+    }
+    return '?';
+  }  
 }
-
 
 class ClickHouseQuery extends BaseQuery {
   newFilter(filter) {
