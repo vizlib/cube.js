@@ -416,7 +416,11 @@ class ApiGateway {
       };
       res({
         query: normalizedQuery,
-        data: transformData(aliasToMemberNameMap, flattenAnnotation, response.data, normalizedQuery),
+        // data: transformData(aliasToMemberNameMap, flattenAnnotation, response.data, normalizedQuery),
+        // ClickHouseDriver.js injected statistics and returns response object instead of data array
+        data: transformData(aliasToMemberNameMap, flattenAnnotation, response.data.data || response.data, normalizedQuery),
+        // added statistics from ClickHouseDriver response object
+        statistics: response.data.statistics || {},
         lastRefreshTime: response.lastRefreshTime && response.lastRefreshTime.toISOString(),
         ...(process.env.NODE_ENV === 'production' ? undefined : {
           refreshKeyValues: response.refreshKeyValues,
