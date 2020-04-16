@@ -12,7 +12,8 @@ class ClickHouseDriver extends BaseDriver {
       port: process.env.CUBEJS_DB_PORT,
       auth: process.env.CUBEJS_DB_USER || process.env.CUBEJS_DB_PASS ? `${process.env.CUBEJS_DB_USER}:${process.env.CUBEJS_DB_PASS}` : '',
       queryOptions: {
-        database: process.env.CUBEJS_DB_NAME || config.database
+        database: process.env.CUBEJS_DB_NAME || config.database,
+        send_progress_in_http_headers: 1
       },
       ...config
     };
@@ -109,10 +110,23 @@ class ClickHouseDriver extends BaseDriver {
               row[field] = `${value.substring(0, 10)}T${value.substring(11, 22)}.000`;
             } else if (meta.type.includes("Date")) {
               row[field] = `${value}T00:00:00.000`;
+            // } else if (meta.type.includes("Int") || meta.type.includes("Float")) {
+            //   // convert all numbers into strings
+            //   row[field] = `${value}`;
             }
           }
         });
       });
+      // hacky way to inject statistics and give back response object instead of data array
+      // needs a special treatment in @cubejs-backend/api-gateway/index.js
+      res.statistics = {
+        rows: res.rows,
+        rows_before_limit_at_least: res.rows_before_limit_at_least,
+        elapsed: res.statistics.elapsed,
+        rows_read: res.statistics.rows_read,
+        bytes_read: res.statistics.bytes_read
+      }
+      return res;
     }
     return res.data;
   }
