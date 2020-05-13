@@ -339,7 +339,38 @@ class BaseQuery {
     const inlineWhereConditions = [];
     const commonQuery = this.rewriteInlineWhere(() => this.commonQuery(), inlineWhereConditions);
     const inlineFilters = inlineWhereConditions.map(f => ({ filterToWhere: () => f }));
-    return `${commonQuery} ${this.baseWhere(this.allFilters.concat(inlineFilters))}` +
+
+    // ### RB 2020-05-13 fix: suppress filter in outer SELECT when dimension.shown == false
+    const suppressedFilterDimensions = [];
+    const allFiltersFixed = this.allFilters.filter((filter) => {
+      if (filter.dimension) {
+        const delimPos = filter.dimension.indexOf('.');
+        const cubeName = filter.dimension.substr(0, delimPos);
+        const dimName = filter.dimension.substr(delimPos + 1);
+        if (this.cubeEvaluator.builtCubes[cubeName]) {
+          const cube = this.cubeEvaluator.builtCubes[cubeName];
+          if (cube.dimensions[dimName]) {
+            const dim = cube.dimensions[dimName];
+            if (dim.shown === false) {
+              suppressedFilterDimensions.push(filter.dimension);
+              return false;
+            }
+          }
+        }
+      }
+      return true;
+    });
+    if (suppressedFilterDimensions.length > 0 && process.env.NODE_ENV !== 'production') {
+      console.log('### RB 2020-05-13 fix: suppress filter in outer SELECT when dimension.shown == false\n', 
+        commonQuery, 'Suppressed Filter Dimensions: ' + suppressedFilterDimensions.join());
+    }
+    // ###
+
+
+    // ###
+    // return `${commonQuery} ${this.baseWhere(this.allFilters.concat(inlineWhereConditions))}` +  
+    // ###
+    return `${commonQuery} ${this.baseWhere(allFiltersFixed.concat(inlineWhereConditions))}` +  
       this.groupByClause() +
       this.baseHaving(this.measureFilters) +
       this.orderBy() +
