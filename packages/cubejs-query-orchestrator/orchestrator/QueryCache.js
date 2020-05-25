@@ -54,7 +54,9 @@ class QueryCache {
 
     if (queryBody.renewQuery) {
       this.logger('Requested renew', { cacheKey, requestId: queryBody.requestId });
-      return this.renewQuery(query, values, cacheKeyQueries, expireSecs, cacheKey, renewalThreshold, {
+      // ## RB 2020-05-25 fix: in case of a direct query (renewQuery=true), force to execute query instantly
+      // return this.renewQuery(query, values, cacheKeyQueries, expireSecs, cacheKey, renewalThreshold, {
+      return this.renewQuery(query, values, cacheKeyQueries, 1, cacheKey, 1, {
         external: queryBody.external,
         requestId: queryBody.requestId,
         refreshKeyRenewalThresholds
