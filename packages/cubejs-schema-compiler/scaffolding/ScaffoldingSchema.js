@@ -119,24 +119,58 @@ class ScaffoldingSchema {
   }
 
   numberMeasures(tableDefinition) {
-    return tableDefinition.filter(
+    // return tableDefinition.filter(
+    //   column => !column.name.startsWith('_') &&
+    //     (this.columnType(column) === 'number') &&
+    //     this.fromMeasureDictionary(column)
+    // ).map(column => ({
+    //   name: column.name,
+    //   types: ['sum', 'avg', 'min', 'max'],
+    //   title: inflection.titleize(column.name)
+    // }));
+
+    const measureColumns = tableDefinition.filter(
       column => !column.name.startsWith('_') &&
         (this.columnType(column) === 'number') &&
         this.fromMeasureDictionary(column)
-    ).map(column => ({
-      name: column.name,
-      types: ['sum', 'avg', 'min', 'max'],
-      title: inflection.titleize(column.name)
-    }));
+    );
+    let measureDefinitions = [];
+    // create sum, avg, min, max measures for each numerical column
+    measureColumns.forEach(column => {
+      measureDefinitions.push({
+        name: column.name,
+        types: ['sum'],
+        title: inflection.titleize(column.name) + ' Sum'
+      });
+      measureDefinitions.push({
+        name: column.name,
+        types: ['avg'],
+        title: inflection.titleize(column.name) + ' Avg'
+      });
+      measureDefinitions.push({
+        name: column.name,
+        types: ['min'],
+        title: inflection.titleize(column.name) + ' Min'
+      });
+      measureDefinitions.push({
+        name: column.name,
+        types: ['max'],
+        title: inflection.titleize(column.name) + ' Max'
+      });
+    });
+    return measureDefinitions;
   }
 
   fromMeasureDictionary(column) {
-    return !column.name.match(new RegExp(idRegex, "i")) && !!MEASURE_DICTIONARY.find(word => column.name.toLowerCase().endsWith(word));
+    // create measures for all numerical columns (except codes)
+    // return !column.name.match(new RegExp(idRegex, "i")) && !!MEASURE_DICTIONARY.find(word => column.name.toLowerCase().endsWith(word));
+    return !column.name.match(new RegExp(idRegex, "i")) && !column.name.toLowerCase().endsWith('code');
   }
 
   dimensionColumns(tableDefinition) {
-    const dimensionColumns = tableDefinition.filter(
-      column => !column.name.startsWith('_') && this.columnType(column) === 'string' ||
+      // create also dimensions for numerical columns
+      // column => !column.name.startsWith('_') && this.columnType(column) === 'string' ||
+      column => !column.name.startsWith('_') ||
         column.attributes && column.attributes.indexOf('primaryKey') !== -1 ||
         column.name.toLowerCase() === 'id'
     );
